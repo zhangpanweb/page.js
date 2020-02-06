@@ -9,13 +9,13 @@ page('*', notfound);
 page();
 
 function photos(ctx) {
-  var page = ~~ctx.params.page;
-  var from = page * perPage;
-  var to = from + perPage;
+  var page = ~~ctx.params.page; // 获取现在的页码
+  var from = page * perPage; // 图片起始张数
+  var to = from + perPage; // 图片结束张数
   console.log('showing page %s : %s..%s', page, from, to);
-  var photos = images.slice(from, to);
-  display(photos);
-  adjustPager(page);
+  var photos = images.slice(from, to); // 获取图片
+  display(photos); // 进行DOM操作展示图片
+  adjustPager(page); // 设置跳转地址
 }
 
 function notfound() {

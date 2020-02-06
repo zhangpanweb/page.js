@@ -1,8 +1,8 @@
-(function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-	typeof define === 'function' && define.amd ? define(factory) :
+(function (global, factory) { // factory 即为主体部分
+	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() : // es6 模块，采用 module.exports 导出
+	typeof define === 'function' && define.amd ? define(factory) : // amd，采用 define 导出
 	(global.page = factory());
-}(this, (function () { 'use strict';
+}(this, (function () { 'use strict'; // this 变为全局变量，赋值给上面 global
 
 var isarray = Array.isArray || function (arr) {
   return Object.prototype.toString.call(arr) == '[object Array]';
@@ -462,26 +462,26 @@ pathToRegexp_1.tokensToRegExp = tokensToRegExp_1;
   Page.prototype.configure = function(options) {
     var opts = options || {};
 
-    this._window = opts.window || (hasWindow && window);
-    this._decodeURLComponents = opts.decodeURLComponents !== false;
+    this._window = opts.window || (hasWindow && window); // 获取 window
+    this._decodeURLComponents = opts.decodeURLComponents !== false; // 是否进行 decodeURLComponents
     this._popstate = opts.popstate !== false && hasWindow;
     this._click = opts.click !== false && hasDocument;
     this._hashbang = !!opts.hashbang;
 
     var _window = this._window;
-    if(this._popstate) {
+    if(this._popstate) { // 如果 popstate 为 true，监听 popstate 事件
       _window.addEventListener('popstate', this._onpopstate, false);
-    } else if(hasWindow) {
+    } else if(hasWindow) { // 否则，解除 popstate 事件
       _window.removeEventListener('popstate', this._onpopstate, false);
     }
 
-    if (this._click) {
+    if (this._click) { // 监听 click 事件，劫持所有点击事件进行处理
       _window.document.addEventListener(clickEvent, this.clickHandler, false);
     } else if(hasDocument) {
       _window.document.removeEventListener(clickEvent, this.clickHandler, false);
     }
 
-    if(this._hashbang && hasWindow && !hasHistory) {
+    if(this._hashbang && hasWindow && !hasHistory) { // 监听 hashchange 事件
       _window.addEventListener('hashchange', this._onpopstate, false);
     } else if(hasWindow) {
       _window.removeEventListener('hashchange', this._onpopstate, false);
@@ -490,6 +490,7 @@ pathToRegexp_1.tokensToRegExp = tokensToRegExp_1;
 
   /**
    * Get or set basepath to `path`.
+   * 获取或设置 base path
    *
    * @param {string} path
    * @api public
@@ -508,11 +509,11 @@ pathToRegexp_1.tokensToRegExp = tokensToRegExp_1;
    */
   Page.prototype._getBase = function() {
     var base = this._base;
-    if(!!base) return base;
+    if(!!base) return base; // 如果 _base 存在，则直接返回
     var loc = hasWindow && this._window && this._window.location;
 
     if(hasWindow && this._hashbang && loc && loc.protocol === 'file:') {
-      base = loc.pathname;
+      base = loc.pathname; // file协议下直接取 pathname 作为 base
     }
 
     return base;
@@ -546,18 +547,18 @@ pathToRegexp_1.tokensToRegExp = tokensToRegExp_1;
 
   Page.prototype.start = function(options) {
     var opts = options || {};
-    this.configure(opts);
+    this.configure(opts); // 配置 options，添加事件监听等
 
     if (false === opts.dispatch) return;
-    this._running = true;
+    this._running = true; // 设置运行中标志为 true
 
-    var url;
+    var url; // 获取 url
     if(isLocation) {
       var window = this._window;
       var loc = window.location;
 
-      if(this._hashbang && ~loc.hash.indexOf('#!')) {
-        url = loc.hash.substr(2) + loc.search;
+      if(this._hashbang && ~loc.hash.indexOf('#!')) { // 如果地址中包含 #!
+        url = loc.hash.substr(2) + loc.search; // 获取hash部分和search部分并进行拼接
       } else if (this._hashbang) {
         url = loc.search + loc.hash;
       } else {
@@ -575,12 +576,12 @@ pathToRegexp_1.tokensToRegExp = tokensToRegExp_1;
    */
 
   Page.prototype.stop = function() {
-    if (!this._running) return;
-    this.current = '';
-    this.len = 0;
-    this._running = false;
+    if (!this._running) return; // 如果不是运行中状态，表示之前已停止，则什么都不用做
+    this.current = ''; // 重置 current
+    this.len = 0; // 重置 len
+    this._running = false; // 将 运行中 标志位置为 false
 
-    var window = this._window;
+    var window = this._window; // 移除各类事件监听
     this._click && window.document.removeEventListener(clickEvent, this.clickHandler, false);
     hasWindow && window.removeEventListener('popstate', this._onpopstate, false);
     hasWindow && window.removeEventListener('hashchange', this._onpopstate, false);
@@ -598,12 +599,12 @@ pathToRegexp_1.tokensToRegExp = tokensToRegExp_1;
    */
 
   Page.prototype.show = function(path, state, dispatch, push) {
-    var ctx = new Context(path, state, this),
-      prev = this.prevContext;
+    var ctx = new Context(path, state, this), // 现在的 ctx
+      prev = this.prevContext; // 前一个 ctx
     this.prevContext = ctx;
     this.current = ctx.path;
-    if (false !== dispatch) this.dispatch(ctx, prev);
-    if (false !== ctx.handled && false !== push) ctx.pushState();
+    if (false !== dispatch) this.dispatch(ctx, prev); // dispatch ctx
+    if (false !== ctx.handled && false !== push) ctx.pushState(); // 如果 dispatch 之后，事件还是未被处理，则 pushState
     return ctx;
   };
 
@@ -618,17 +619,17 @@ pathToRegexp_1.tokensToRegExp = tokensToRegExp_1;
 
   Page.prototype.back = function(path, state) {
     var page = this;
-    if (this.len > 0) {
+    if (this.len > 0) { // 如果 len > 0，表示还可以后退
       var window = this._window;
       // this may need more testing to see if all browsers
       // wait for the next tick to go back in history
-      hasHistory && window.history.back();
+      hasHistory && window.history.back(); // 执行 history.back 后退
       this.len--;
-    } else if (path) {
+    } else if (path) { // 否则，如果 path 存在，跳转到 path
       setTimeout(function() {
         page.show(path, state);
       });
-    } else {
+    } else { // 如果 path 也没有，到 base 地址
       setTimeout(function() {
         page.show(page._getBase(), state);
       });
@@ -638,6 +639,7 @@ pathToRegexp_1.tokensToRegExp = tokensToRegExp_1;
   /**
    * Register route to redirect from one path to other
    * or just redirect to another route
+   * 注册从 from 到 to 的重定向路由
    *
    * @param {string} from - if param 'to' is undefined redirects to 'from'
    * @param {string=} to
@@ -650,7 +652,7 @@ pathToRegexp_1.tokensToRegExp = tokensToRegExp_1;
     if ('string' === typeof from && 'string' === typeof to) {
       page.call(this, from, function(e) {
         setTimeout(function() {
-          inst.replace(/** @type {!string} */ (to));
+          inst.replace(/** @type {!string} */ (to)); // 进行重定向操作
         }, 0);
       });
     }
@@ -676,12 +678,12 @@ pathToRegexp_1.tokensToRegExp = tokensToRegExp_1;
 
 
   Page.prototype.replace = function(path, state, init, dispatch) {
-    var ctx = new Context(path, state, this),
-      prev = this.prevContext;
+    var ctx = new Context(path, state, this), // 现在的上下文
+      prev = this.prevContext; // 前一个上下文
     this.prevContext = ctx;
     this.current = ctx.path;
     ctx.init = init;
-    ctx.save(); // save before dispatching, which may redirect
+    ctx.save(); // save before dispatching, which may redirect // dispatch 前 save，包含可能的重定向
     if (false !== dispatch) this.dispatch(ctx, prev);
     return ctx;
   };
@@ -697,23 +699,23 @@ pathToRegexp_1.tokensToRegExp = tokensToRegExp_1;
     var i = 0, j = 0, page = this;
 
     function nextExit() {
-      var fn = page.exits[j++];
-      if (!fn) return nextEnter();
-      fn(prev, nextExit);
+      var fn = page.exits[j++]; // 获取第j个 exits 回调
+      if (!fn) return nextEnter(); // exits 回调全部调用结束后，调用 enter 回调
+      fn(prev, nextExit); // 以 prev 和 nextExit 调用 exits 回调，使所有 exits 回调串联调用
     }
 
     function nextEnter() {
-      var fn = page.callbacks[i++];
+      var fn = page.callbacks[i++]; // 获取第i个回调
 
       if (ctx.path !== page.current) {
         ctx.handled = false;
         return;
       }
-      if (!fn) return unhandled.call(page, ctx);
-      fn(ctx, nextEnter);
+      if (!fn) return unhandled.call(page, ctx); // 如果没有回调进行处理，则调用 unhandled
+      fn(ctx, nextEnter); // 以 ctx 和 nextEnter 调用回调，各中间件回调串联调用
     }
 
-    if (prev) {
+    if (prev) { // 如果 prev 存在，则需要调用进行 exit 调用
       nextExit();
     } else {
       nextEnter();
@@ -725,9 +727,11 @@ pathToRegexp_1.tokensToRegExp = tokensToRegExp_1;
    * callback `fn()`, which will be called
    * on the previous context when a new
    * page is visited.
+   * 
+   * 注册一个 exit 事件，当将要访问新的页面时，回调将会被调用
    */
   Page.prototype.exit = function(path, fn) {
-    if (typeof path === 'function') {
+    if (typeof path === 'function') { // page.exit(callback) 即为 page.exit('*', callback)
       return this.exit('*', path);
     }
 
@@ -743,10 +747,10 @@ pathToRegexp_1.tokensToRegExp = tokensToRegExp_1;
 
   /* jshint +W054 */
   Page.prototype.clickHandler = function(e) {
-    if (1 !== this._which(e)) return;
+    if (1 !== this._which(e)) return; // 只处理左键点击
 
-    if (e.metaKey || e.ctrlKey || e.shiftKey) return;
-    if (e.defaultPrevented) return;
+    if (e.metaKey || e.ctrlKey || e.shiftKey) return; // 如果有复合键，不进行处理
+    if (e.defaultPrevented) return; // 默认时间被组织，不处理
 
     // ensure link
     // use shadow dom when available if not, fall back to composedPath()
@@ -754,7 +758,7 @@ pathToRegexp_1.tokensToRegExp = tokensToRegExp_1;
     var el = e.target;
     var eventPath = e.path || (e.composedPath ? e.composedPath() : null);
 
-    if(eventPath) {
+    if(eventPath) { // 沿着 eventPath 向上查找 a 标签
       for (var i = 0; i < eventPath.length; i++) {
         if (!eventPath[i].nodeName) continue;
         if (eventPath[i].nodeName.toUpperCase() !== 'A') continue;
@@ -777,13 +781,16 @@ pathToRegexp_1.tokensToRegExp = tokensToRegExp_1;
     // Ignore if tag has
     // 1. "download" attribute
     // 2. rel="external" attribute
+    // 如果 a 标签有 download 属性 或者 rel 属性为 external ，不进行事件处理
     if (el.hasAttribute('download') || el.getAttribute('rel') === 'external') return;
 
     // ensure non-hash for the same path
-    var link = el.getAttribute('href');
+    var link = el.getAttribute('href'); // 获取 a 标签的 href 属性
+    // 如果是 同一个路径 或者 只是hash跳转，不处理
     if(!this._hashbang && this._samePath(el) && (el.hash || '#' === link)) return;
 
     // Check for mailto: in the href
+    // 如果是 mailto 协议，不处理
     if (link && link.indexOf('mailto:') > -1) return;
 
     // check target
@@ -793,14 +800,16 @@ pathToRegexp_1.tokensToRegExp = tokensToRegExp_1;
     // x-origin
     // note: svg links that are not relative don't call click events (and skip page.js)
     // consequently, all svg links tested inside page.js are relative and in the same origin
+    // 如果不是 svg 并且不同源，不处理
     if (!svg && !this.sameOrigin(el.href)) return;
 
     // rebuild path
     // There aren't .pathname and .search properties in svg links, so we use href
     // Also, svg href is an object and its desired value is in .baseVal property
+    // 构建整体 path
     var path = svg ? el.href.baseVal : (el.pathname + el.search + (el.hash || ''));
 
-    path = path[0] !== '/' ? '/' + path : path;
+    path = path[0] !== '/' ? '/' + path : path; // 添加 / 前缀
 
     // strip leading "/[drive letter]:" on NW.js on Windows
     if (hasProcess && path.match(/^\/[a-zA-Z]:\//)) {
@@ -811,7 +820,7 @@ pathToRegexp_1.tokensToRegExp = tokensToRegExp_1;
     var orig = path;
     var pageBase = this._getBase();
 
-    if (path.indexOf(pageBase) === 0) {
+    if (path.indexOf(pageBase) === 0) { // 如果以 base 开头，则去掉前面的 base 部分
       path = path.substr(pageBase.length);
     }
 
@@ -827,30 +836,32 @@ pathToRegexp_1.tokensToRegExp = tokensToRegExp_1;
 
   /**
    * Handle "populate" events.
+   * 点击浏览器后退、前进按钮时，触发 popstate 事件，执行对应操作
+   * popstate 触发时，历史记录状态已经变更完成了
    * @api private
    */
 
   Page.prototype._onpopstate = (function () {
     var loaded = false;
-    if ( ! hasWindow ) {
+    if ( ! hasWindow ) { // 如果不在浏览器环境下，什么都不做
       return function () {};
     }
-    if (hasDocument && document.readyState === 'complete') {
+    if (hasDocument && document.readyState === 'complete') { // 如果 document 加载完成，设置 laoded 标志为 true
       loaded = true;
     } else {
-      window.addEventListener('load', function() {
+      window.addEventListener('load', function() { // 否则监听 window 的 load 事件，回调中设置 laoded 为 true
         setTimeout(function() {
           loaded = true;
         }, 0);
       });
     }
     return function onpopstate(e) {
-      if (!loaded) return;
+      if (!loaded) return; // 如果页面未加载完成不处理
       var page = this;
-      if (e.state) {
+      if (e.state) { // 此时，如果 e.state 存在，则使用 replace，替换掉浏览器自己的变更
         var path = e.state.path;
         page.replace(path, e.state);
-      } else if (isLocation) {
+      } else if (isLocation) { // 否则，在有 Location 的环境下，使用 show，展示对应页面
         var loc = page._window.location;
         page.show(loc.pathname + loc.search + loc.hash, undefined, undefined, false);
       }
@@ -859,6 +870,7 @@ pathToRegexp_1.tokensToRegExp = tokensToRegExp_1;
 
   /**
    * Event button.
+   * 判断点击的按键是哪一个
    */
   Page.prototype._which = function(e) {
     e = e || (hasWindow && this._window.event);
@@ -867,6 +879,7 @@ pathToRegexp_1.tokensToRegExp = tokensToRegExp_1;
 
   /**
    * Convert to a URL object
+   * 将 href 字符串转化为 URL 对象
    * @api private
    */
   Page.prototype._toURL = function(href) {
@@ -882,6 +895,7 @@ pathToRegexp_1.tokensToRegExp = tokensToRegExp_1;
 
   /**
    * Check if `href` is the same origin.
+   * 判断 href 是否同源
    * @param {string} href
    * @api public
    */
@@ -901,6 +915,7 @@ pathToRegexp_1.tokensToRegExp = tokensToRegExp_1;
        Also the comparition with `port` is changed from `===` to `==` because
        `port` can be a string sometimes. This only applies to ie11.
     */
+    // protocol, hostname, port 相同则是同源
     return loc.protocol === url.protocol &&
       loc.hostname === url.hostname &&
       (loc.port === url.port || loc.port === '' && (url.port == 80 || url.port == 443)); // jshint ignore:line
@@ -921,6 +936,7 @@ pathToRegexp_1.tokensToRegExp = tokensToRegExp_1;
    * Remove URL encoding from the given `str`.
    * Accommodates whitespace in both x-www-form-urlencoded
    * and regular percent-encoded form.
+   * decode URL，并且处理其中的空格
    *
    * @param {string} val - URL component to decode
    * @api private
@@ -1004,18 +1020,21 @@ pathToRegexp_1.tokensToRegExp = tokensToRegExp_1;
 
   function page(path, fn) {
     // <callback>
+    // 如果第一个参数是 回调，则将 path 赋值为 *，也就是 page(callback) 相当于 page('*', callback)
     if ('function' === typeof path) {
       return page.call(this, '*', path);
     }
 
     // route <path> to <callback ...>
+    // page(path, callback) 注册路由
     if ('function' === typeof fn) {
       var route = new Route(/** @type {string} */ (path), null, this);
       for (var i = 1; i < arguments.length; ++i) {
-        this.callbacks.push(route.middleware(arguments[i]));
+        this.callbacks.push(route.middleware(arguments[i])); // 生成中间件方法并推入到 callbacks 中
       }
       // show <path> with [state]
     } else if ('string' === typeof path) {
+      // 如果 path 和 fn 都是 string，则将 path 重定向为 fn
       this['string' === typeof fn ? 'redirect' : 'show'](path, fn);
       // start [options]
     } else {
@@ -1032,12 +1051,12 @@ pathToRegexp_1.tokensToRegExp = tokensToRegExp_1;
    * @api private
    */
   function unhandled(ctx) {
-    if (ctx.handled) return;
+    if (ctx.handled) return; // 如果已经被处理了，则不做任何处理
     var current;
     var page = this;
     var window = page._window;
 
-    if (page._hashbang) {
+    if (page._hashbang) { // 如果是使用 #!
       current = isLocation && this._getBase() + window.location.hash.replace('#!', '');
     } else {
       current = isLocation && window.location.pathname + window.location.search;
@@ -1046,11 +1065,12 @@ pathToRegexp_1.tokensToRegExp = tokensToRegExp_1;
     if (current === ctx.canonicalPath) return;
     page.stop();
     ctx.handled = false;
-    isLocation && (window.location.href = ctx.canonicalPath);
+    isLocation && (window.location.href = ctx.canonicalPath); // 使用 window.location.href 进行页面跳转
   }
 
   /**
    * Escapes RegExp characters in the given string.
+   * 将 s 字符串中的正则符号都进行转义
    *
    * @param {string} s
    * @api private
@@ -1080,24 +1100,24 @@ pathToRegexp_1.tokensToRegExp = tokensToRegExp_1;
 
     this.canonicalPath = path;
     var re = new RegExp('^' + escapeRegExp(pageBase));
-    this.path = path.replace(re, '') || '/';
-    if (hashbang) this.path = this.path.replace('#!', '') || '/';
+    this.path = path.replace(re, '') || '/'; // 获取路径中出去 base 的部分
+    if (hashbang) this.path = this.path.replace('#!', '') || '/'; // 如果 hashbang 为 true，除去路径中 #! 的部分
 
     this.title = (hasDocument && window.document.title);
     this.state = state || {};
     this.state.path = path;
-    this.querystring = ~i ? _page._decodeURLEncodedURIComponent(path.slice(i + 1)) : '';
-    this.pathname = _page._decodeURLEncodedURIComponent(~i ? path.slice(0, i) : path);
-    this.params = {};
+    this.querystring = ~i ? _page._decodeURLEncodedURIComponent(path.slice(i + 1)) : ''; // 获取路径中的 search 部分
+    this.pathname = _page._decodeURLEncodedURIComponent(~i ? path.slice(0, i) : path); // 获取路径中 pathname 部分
+    this.params = {}; // 参数部分
 
     // fragment
     this.hash = '';
-    if (!hashbang) {
-      if (!~this.path.indexOf('#')) return;
+    if (!hashbang) { // 如果不是 hashbang
+      if (!~this.path.indexOf('#')) return; // 如果路径中没有 # ，则没有hash
       var parts = this.path.split('#');
-      this.path = this.pathname = parts[0];
-      this.hash = _page._decodeURLEncodedURIComponent(parts[1]) || '';
-      this.querystring = this.querystring.split('#')[0];
+      this.path = this.pathname = parts[0]; // 获取 pathname
+      this.hash = _page._decodeURLEncodedURIComponent(parts[1]) || ''; // 获取 hash 部分
+      this.querystring = this.querystring.split('#')[0]; // 带 hash 情况下的 search 部分
     }
   }
 
@@ -1112,8 +1132,8 @@ pathToRegexp_1.tokensToRegExp = tokensToRegExp_1;
     var window = page._window;
     var hashbang = page._hashbang;
 
-    page.len++;
-    if (hasHistory) {
+    page.len++; // pushState，历史长度+1
+    if (hasHistory) { // 使用 pushState API 进行 pushState 操作
         window.history.pushState(this.state, this.title,
           hashbang && this.path !== '/' ? '#!' + this.path : this.canonicalPath);
     }
@@ -1127,7 +1147,7 @@ pathToRegexp_1.tokensToRegExp = tokensToRegExp_1;
 
   Context.prototype.save = function() {
     var page = this.page;
-    if (hasHistory) {
+    if (hasHistory) { // 使用 replaceState 进行 导航操作
         page._window.history.replaceState(this.state, this.title,
           page._hashbang && this.path !== '/' ? '#!' + this.path : this.canonicalPath);
     }
@@ -1152,7 +1172,7 @@ pathToRegexp_1.tokensToRegExp = tokensToRegExp_1;
     var _page = this.page = page || globalPage;
     var opts = options || {};
     opts.strict = opts.strict || page._strict;
-    this.path = (path === '*') ? '(.*)' : path;
+    this.path = (path === '*') ? '(.*)' : path; 
     this.method = 'GET';
     this.regexp = pathToRegexp_1(this.path, this.keys = [], opts);
   }
@@ -1187,10 +1207,10 @@ pathToRegexp_1.tokensToRegExp = tokensToRegExp_1;
   Route.prototype.match = function(path, params) {
     var keys = this.keys,
       qsIndex = path.indexOf('?'),
-      pathname = ~qsIndex ? path.slice(0, qsIndex) : path,
-      m = this.regexp.exec(decodeURIComponent(pathname));
+      pathname = ~qsIndex ? path.slice(0, qsIndex) : path, // 获取 pathname
+      m = this.regexp.exec(decodeURIComponent(pathname)); // 使用正则匹配 pathname
 
-    if (!m) return false;
+    if (!m) return false; // 如果匹配没有结果，则表示不匹配
 
     delete params[0];
 
@@ -1198,7 +1218,7 @@ pathToRegexp_1.tokensToRegExp = tokensToRegExp_1;
       var key = keys[i - 1];
       var val = this.page._decodeURLEncodedURIComponent(m[i]);
       if (val !== undefined || !(hasOwnProperty.call(params, key.name))) {
-        params[key.name] = val;
+        params[key.name] = val; // 赋值匹配参数
       }
     }
 
